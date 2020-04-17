@@ -34,6 +34,9 @@ namespace kaldi {
 
 /// We need to declare this here as it will be a friend function.
 /// tr(A B), or tr(A B^T).
+
+void printFuncInfo(std::string funcName, int S1, int S2, int V1, int V2);
+
 template<typename Real>
 Real TraceMatMat(const MatrixBase<Real> &A, const MatrixBase<Real> &B,
                  MatrixTransposeType trans = kNoTrans);

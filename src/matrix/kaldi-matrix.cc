@@ -34,6 +34,12 @@ static_assert(int(kaldi::kNoTrans) == int(CblasNoTrans) && int(kaldi::kTrans) ==
 
 namespace kaldi {
 
+void printFuncInfo(std::string funcName, int S1, int S2, int V1, int V2)
+{
+  //printf("Func Name: %s (%d, %d, %d) (%d, %d, %d)\n", funcName, m, n, k, lda, ldb, ldc);
+  KALDI_LOG<< "Func Name: "<< funcName <<"\t"<<S1<<"\t"<<S2<<"\t"<<V1<<"\t"<<V2;
+}
+
 template<typename Real>
 void MatrixBase<Real>::Invert(Real *log_det, Real *det_sign,
                               bool inverse_needed) {
@@ -58,6 +64,7 @@ void MatrixBase<Real>::Invert(Real *log_det, Real *det_sign,
     throw std::bad_alloc();
   }
 
+  printFuncInfo("Invert", M*N, -1, -1, -1);
   clapack_Xgetrf2(&M, &N, data_, &LDA, pivot, &result);
   const int pivot_offset = 1;
 #else
@@ -120,6 +127,8 @@ void MatrixBase<float>::AddVecVec(const float alpha,
                                   const VectorBase<float> &a,
                                   const VectorBase<float> &rb) {
   KALDI_ASSERT(a.Dim() == num_rows_ && rb.Dim() == num_cols_);
+
+  printFuncInfo("AddVecVec", -1, -1, a.Dim(), rb.Dim());
   cblas_Xger(a.Dim(), rb.Dim(), alpha, a.Data(), 1, rb.Data(),
              1, data_, stride_);
 }
@@ -180,6 +189,7 @@ void MatrixBase<Real>::AddMatMat(const Real alpha,
                || (transA == kTrans && transB == kTrans && A.num_rows_ == B.num_cols_ && A.num_cols_ == num_rows_ && B.num_rows_ == num_cols_));
   KALDI_ASSERT(&A !=  this && &B != this);
   if (num_rows_ == 0) return;
+  printFuncInfo("AddMatMat", A.num_cols_*A.num_rows_, B.num_cols_*B.num_rows_, -1, -1);
   cblas_Xgemm(alpha, transA, A.data_, A.num_rows_, A.num_cols_, A.stride_,
               transB, B.data_, B.stride_, beta, data_, num_rows_, num_cols_, stride_);
 
@@ -238,6 +248,7 @@ void MatrixBase<Real>::SymAddMat2(const Real alpha,
                ((transA == kNoTrans && A.num_rows_ == num_rows_) ||
                 (transA == kTrans && A.num_cols_ == num_cols_)));
   KALDI_ASSERT(A.data_ != data_);
+  printFuncInfo("SymAddMat2", A.num_cols_*A.num_rows_, -1, -1, -1);
   if (num_rows_ == 0) return;
 
   /// When the matrix dimension(this->num_rows_) is not less than 56
@@ -355,6 +366,7 @@ void MatrixBase<Real>::AddSpSp(const Real alpha, const SpMatrix<Real> &A_in,
 template<typename Real>
 void MatrixBase<Real>::AddMat(const Real alpha, const MatrixBase<Real>& A,
                                MatrixTransposeType transA) {
+  printFuncInfo("AddMat", A.num_cols_*A.num_rows_, -1, -1, -1);
   if (&A == this) {
     if (transA == kNoTrans) {
       Scale(alpha + 1.0);
@@ -578,6 +590,8 @@ void MatrixBase<Real>::AddDiagVecMat(
     const MatrixBase<Real> &M,
     MatrixTransposeType transM,
     Real beta) {
+
+  printFuncInfo("AddDiagVecMat", M.NumRows()*M.NumCols(), -1, v.Dim(), -1);
   if (beta != 1.0) this->Scale(beta);
 
   if (transM == kNoTrans) {
@@ -604,6 +618,7 @@ void MatrixBase<Real>::AddMatDiagVec(
     VectorBase<Real> &v,
     Real beta) {
 
+  printFuncInfo("AddDiagVecMat", M.NumRows()*M.NumCols(), -1, v.Dim(), -1);
   if (beta != 1.0) this->Scale(beta);
 
   if (transM == kNoTrans) {
@@ -2693,6 +2708,8 @@ Real TraceMatMat(const MatrixBase<Real> &A,
                   const MatrixBase<Real> &B,
                   MatrixTransposeType trans) {  // tr(A B), equivalent to sum of each element of A times same element in B'
   MatrixIndexT aStride = A.stride_, bStride = B.stride_;
+
+  printFuncInfo("TraceMatMat", A.NumRows()*A.NumCols(), B.NumRows()*B.NumCols(), -1, -1);
   if (trans == kNoTrans) {
     KALDI_ASSERT(A.NumRows() == B.NumCols() && A.NumCols() == B.NumRows());
     Real ans = 0.0;
@@ -2923,6 +2940,7 @@ void MatrixBase<Real>::AddRows(Real alpha,
       num_cols = num_cols_, this_stride = stride_;
   Real *this_data = this->data_;
 
+  printFuncInfo("AddRows", src.num_rows_ * src.num_cols_, -1, -1, -1);
   for (MatrixIndexT r = 0; r < num_rows; r++, this_data += this_stride) {
     MatrixIndexT index = indexes[r];
     KALDI_ASSERT(index >= -1 && index < src.NumRows());

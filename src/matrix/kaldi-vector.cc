@@ -38,6 +38,7 @@ Real VecVec(const VectorBase<Real> &a,
             const VectorBase<Real> &b) {
   MatrixIndexT adim = a.Dim();
   KALDI_ASSERT(adim == b.Dim());
+  printFuncInfo("VecVec", -1, -1, a.Dim(), b.Dim());
   return cblas_Xdot(adim, a.Data(), 1, b.Data(), 1);
 }
 
@@ -76,6 +77,7 @@ void VectorBase<float>::AddVec(const float alpha,
                                const VectorBase<float> &v) {
   KALDI_ASSERT(dim_ == v.dim_);
   KALDI_ASSERT(&v != this);
+  printFuncInfo("AddVec", -1, -1, v.dim_, -1);
   cblas_Xaxpy(dim_, alpha, v.Data(), 1, data_, 1);
 }
 
@@ -97,6 +99,7 @@ void VectorBase<Real>::AddMatVec(const Real alpha,
   KALDI_ASSERT((trans == kNoTrans && M.NumCols() == v.dim_ && M.NumRows() == dim_)
                || (trans == kTrans && M.NumRows() == v.dim_ && M.NumCols() == dim_));
   KALDI_ASSERT(&v != this);
+  printFuncInfo("AddMatVec", M.NumRows()*M.NumCols(), -1, v.dim_, -1);
   cblas_Xgemv(trans, M.NumRows(), M.NumCols(), alpha, M.Data(), M.Stride(),
               v.Data(), 1, beta, data_, 1);
 }
